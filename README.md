@@ -142,10 +142,10 @@ Evaluación comparativa usando tráfico generado en el laboratorio:
 
 | Modelo | Accuracy | Precision | Recall | F1-Score | AUC |
 |---|---:|---:|---:|---:|---:|
-| Random Forest | 0.692 | 0.714 | 0.714  | 0.714 | 0.786 |
-| Gradient Boosting | 0.692 | 0.714 | 0.714  | 0.714  | 0.691 |
-| Decision Tree | 0.692 | 0.714 | 0.714  | 0.714  | 0.691 |
-| Logistic Regression | 0.692 | 0.800 | 0.571 | 0.667 | 0.809 |
+| Random Forest | 0.992 | 1.000 | 0.984  | 0.992 | 0.995 |
+| Gradient Boosting | 0.992 | 1.000 | 0.984  | 0.992  | 0.992 |
+| Decision Tree | 0.992 | 1.000 | 0.984  | 0.992  | 0.992 |
+| Logistic Regression | 0.992 | 1.000 | 0.977 | 0.977 | 0.995 |
 
 ---
 
