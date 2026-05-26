@@ -1,109 +1,143 @@
-# Firewall con Inteligencia Artificial
+# 🛡️ Firewall con Inteligencia Artificial (firewall-ia-lab)
 
-Laboratorio práctico de ciberseguridad que implementa un firewall adaptativo
-combinando nftables con un modelo de Machine Learning (RandomForest) para
-detección y bloqueo automático de tráfico malicioso en tiempo real.
+![Python](https://shields.io)
+![Linux](https://shields.io)
+![Scikit-Learn](https://shields.io)
+![Flask](https://shields.io)
 
-## Arquitectura
-Internet → Ubuntu Server (router/firewall) → Red interna
-↓
-nftables + IA
-↓
-Kali Linux | Linux Mint
+Laboratorio práctico de ciberseguridad avanzada. Implementa un firewall adaptativo que combina **nftables** con un modelo de Machine Learning (**RandomForest**) para la detección, mitigación y bloqueo automático de tráfico malicioso en tiempo real.
 
-## Stack tecnológico
+---
 
-| Componente | Herramienta |
-|---|---|
-| Sistema Operativo | Ubuntu Server 22.04 |
-| Firewall | nftables |
-| Captura | tcpdump + scapy |
-| ML Pipeline | scikit-learn (RandomForest) |
-| Dashboard | Flask + Chart.js |
-| Alertas | SMTP / Gmail |
+## 🗺️ Arquitectura de Red
 
-## Estructura del proyecto
+Internet ──> [ Ubuntu Server (Router / Firewall / IA) ] ──> Red Interna│┌───────┴───────┐▼               ▼nftables + IA   Dashboard Web│├──> [ Kali Linux ] (Atacante: 192.168.10.10)└──> [ Linux Mint ] (Legítimo: 192.168.10.20)
+---
+
+## 💻 Stack Tecnológico
+
+
+| Componente | Herramienta / Tecnología |
+| :--- | :--- |
+| **Sistema Operativo** | Ubuntu Server 22.04 LTS |
+| **Seguridad de Red** | nftables (Framework de filtrado de paquetes) |
+| **Análisis de Tráfico** | scapy + tcpdump |
+| **Pipeline de ML** | scikit-learn (Algoritmo principal: RandomForest) |
+| **Visualización** | Flask + Socket.IO + Chart.js (Dashboard en tiempo real) |
+| **Notificaciones** | SMTP (Secure Gmail Alerter) |
+
+---
+
+## 📁 Estructura del Proyecto
+
+```text
 firewall-ia-lab/
-├── ai_firewall.py          # Motor de decisión IA en tiempo real
-├── alerter.py              # Sistema de alertas por email
-├── extract_features.py     # Extracción de 13 features desde pcap
-├── train_model.py          # Entrenamiento y comparativa de modelos
-├── build_dataset.py        # Construcción del dataset balanceado
-├── rebuild_dataset.py      # Rebalanceo con nuevos datos
-├── test_alert.py           # Prueba del sistema de alertas
-├── nftables.conf           # Configuración del firewall
+├── ai_firewall.py          # Motor de inferencia IA y toma de decisiones
+├── alerter.py              # Módulo de alertas automáticas por email
+├── extract_features.py     # Extractor de 13 características (features) desde red/pcap
+├── train_model.py          # Script de entrenamiento y evaluación de modelos
+├── build_dataset.py        # Generador del dataset base balanceado
+├── rebuild_dataset.py      # Rebalanceo dinámico con nuevas muestras capturadas
+├── test_alert.py           # Script de diagnóstico para el sistema de alertas
+├── nftables.conf           # Reglas base del firewall y definición de conjuntos (sets)
+├── requirements.txt        # Dependencias congeladas del entorno virtual
+├── fw_block.sh             # Script auxiliar para bloquear IPs sospechosas
+├── fw_unblock.sh           # Script auxiliar para desbloquear IPs de la lista
+├── fw_status.sh            # Script para verificar estado del firewall
+├── show_decisions.sh       # Utilidad para formatear el registro de decisiones
 ├── data/
-│   └── raw/                # CSVs de features extraídas
+│   └── raw/                # Archivos CSV intermedios (attack.csv, normal.csv)
 ├── models/
-│   ├── firewall_ai_model.joblib
-│   └── scaler.joblib
-├── dashboard/
-│   ├── app.py              # Servidor Flask
-│   └── templates/
-│       └── index.html      # Dashboard web
-└── systemd/
-├── ai-firewall.service
-└── ai-dashboard.service
+│   ├── firewall_ai_model.joblib # Binario del modelo entrenado óptimo
+│   └── scaler.joblib            # Escalador de características normalizado
+└── dashboard/
+    ├── app.py              # Servidor Web Flask backend
+    └── templates/
+        └── index.html      # Interfaz de usuario frontend interactiva
+```
 
-## Funciones extra implementadas
+---
 
-1. **Dashboard web en tiempo real** — Flask + Chart.js, actualización cada 5s
-2. **Sistema de alertas por email** — notificación automática por umbrales
+## 📊 Métricas de Rendimiento del Modelo
 
-## Métricas del modelo
+Evaluación comparativa realizada sobre el tráfico capturado en el laboratorio:
 
-| Modelo | Accuracy | Precision | Recall | F1 | AUC |
-|---|---|---|---|---|---|
-| Random Forest | 0.974 | 0.975 | 0.972 | 0.974 | 0.997 |
+
+| Algoritmo / Modelo | Accuracy | Precision | Recall | F1-Score | AUC |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **🏆 Random Forest** | **0.974** | **0.975** | **0.972** | **0.974** | **0.997** |
 | Gradient Boosting | 0.968 | 0.969 | 0.968 | 0.968 | 0.995 |
 | Decision Tree | 0.954 | 0.955 | 0.954 | 0.954 | 0.954 |
 | Logistic Regression | 0.921 | 0.922 | 0.921 | 0.921 | 0.981 |
 
-## Instalación rápida
+---
 
+## 🚀 Instalación y Despliegue Rápido
+
+### 1. Clonación del Entorno
 ```bash
-# Clonar repositorio
-git clone https://github.com/tu_usuario/firewall-ia-lab.git
+git clone https://github.com
 cd firewall-ia-lab
+```
 
-# Crear entorno virtual
+### 2. Configuración del Entorno Virtual (Python)
+```bash
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+```
 
-# Aplicar firewall
+### 3. Aplicar Políticas del Firewall
+```bash
 sudo nft -f nftables.conf
+```
 
-# Iniciar servicios
+### 4. Lanzamiento de Servicios
+*(Se recomienda configurar como servicios Systemd usando los archivos en tu servidor)*
+```bash
+# Iniciar servicios del laboratorio
 sudo systemctl start ai-firewall
 sudo systemctl start ai-dashboard
 ```
 
-## Uso
+---
 
+## 🛠️ Operación y Diagnóstico
+
+### Monitorear Servicios
 ```bash
-# Ver estado del sistema
 sudo systemctl status ai-firewall ai-dashboard
-
-# Ver IPs bloqueadas
-sudo nft list set inet filter ia_blocklist
-
-# Ver decisiones del motor
-cat logs/decisions.json | python3 -m json.tool
-
-# Dashboard web
-http://192.168.10.1:5000
 ```
 
-## Entorno de laboratorio
+### Inspeccionar la Lista Negra Activa (IPs Bloqueadas por IA)
+```bash
+sudo nft list set inet filter ia_blocklist
+```
 
-| VM | IP | Rol |
-|---|---|---|
-| Ubuntu Server | 192.168.10.1 | Router + Firewall + IA |
-| Kali Linux | 192.168.10.10 | Máquina atacante |
-| Linux Mint | 192.168.10.20 | Cliente legítimo |
+### Revisar Historial de Decisiones del Motor
+```bash
+./show_decisions.sh
+```
 
-## Uso educativo
+### Acceso al Dashboard Web
+Actualizaciones dinámicas cada 5 segundos mediante sockets:
+👉 **`http://192.168.10.1:5000`**
 
-Laboratorio desarrollado con fines académicos.
-Versión 1.0 — Mayo 2026
+---
+
+## 🌐 Configuración del Laboratorio de Pruebas
+
+
+| Máquina Virtual | Dirección IP | Rol en el Laboratorio |
+| :--- | :--- | :--- |
+| **Ubuntu Server** | `192.168.10.1` | Gateway + Firewall Perimetral + Motor IA |
+| **Kali Linux** | `192.168.10.10` | Vector de ataque externo (Escaneos, DoS) |
+| **Linux Mint** | `192.168.10.20` | Cliente interno / Tráfico legítimo |
+
+---
+
+## 📖 Notas Educativas
+Proyecto con fines puramente académicos y de investigación en el ámbito de la automatización de la ciberdefensa.
+
+**Autor:** LuisAlbertoQ  
+**Versión:** 1.0 — Mayo 2026
