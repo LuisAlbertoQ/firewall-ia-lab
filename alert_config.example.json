@@ -1,0 +1,15 @@
+{
+    "enabled": true,
+    "smtp_host": "smtp.gmail.com",
+    "smtp_port": 587,
+    "smtp_user": "correo@gmail.com",
+    "smtp_pass": "xxxx xxxx xxxx xxxx",
+    "mail_from": "correo@gmail.com",
+    "mail_to": [ "correo@gmail.com"],
+    "thresholds": {
+        "blocks_per_window": 3,
+        "window_minutes": 2,
+        "confidence_min": 0.90
+    },
+    "cooldown_minutes": 10
+}

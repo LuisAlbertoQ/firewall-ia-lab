@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Firewall IA — Dashboard</title>
+<script src="/static/chart.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: #0f1117;
+  color: #e2e8f0;
+  min-height: 100vh;
+}
+header {
+  background: #1a1d2e;
+  border-bottom: 1px solid #2d3748;
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+header h1 { font-size: 1.3rem; font-weight: 600; color: #7f77dd; }
+#service-badge {
+  padding: 4px 14px; border-radius: 20px;
+  font-size: 0.8rem; font-weight: 600;
+  background: #1d9e75; color: #fff;
+}
+#service-badge.inactive { background: #e24b4a; }
+#last-update { font-size: 0.75rem; color: #718096; }
+main { max-width: 1400px; margin: 0 auto; padding: 1.5rem 2rem; }
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.card {
+  background: #1a1d2e;
+  border: 1px solid #2d3748;
+  border-radius: 10px;
+  padding: 1.2rem;
+}
+.card-label {
+  font-size: 0.72rem; color: #718096;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.4rem;
+}
+.card-value { font-size: 2rem; font-weight: 700; color: #7f77dd; }
+.card-value.danger  { color: #e24b4a; }
+.card-value.success { color: #1d9e75; }
+.card-value.warning { color: #ef9f27; }
+
+.panels-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.panel {
+  background: #1a1d2e;
+  border: 1px solid #2d3748;
+  border-radius: 10px;
+  padding: 1.2rem;
+}
+.panel h2 {
+  font-size: 0.85rem; font-weight: 600;
+  color: #a0aec0; text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #2d3748;
+  padding-bottom: 0.5rem;
+}
+.panel-full { grid-column: 1 / -1; }
+
+table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+th {
+  text-align: left; padding: 6px 8px;
+  color: #718096; font-weight: 500;
+  border-bottom: 1px solid #2d3748;
+}
+td { padding: 6px 8px; border-bottom: 1px solid #1e2330; color: #cbd5e0; }
+tr:hover td { background: #1e2330; }
+
+.badge { padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 600; }
+.badge-block  { background: #3d1515; color: #e24b4a; }
+.badge-allow  { background: #0d2e1f; color: #1d9e75; }
+.badge-attack { background: #3d1515; color: #e24b4a; }
+.badge-normal { background: #0d2e1f; color: #1d9e75; }
+
+.ip-list { display: flex; flex-wrap: wrap; gap: 8px; min-height: 32px; }
+.ip-chip {
+  display: flex; align-items: center; gap: 6px;
+  background: #2d1515;
+  border: 1px solid #e24b4a44;
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 0.8rem; color: #e24b4a;
+}
+.ip-chip button {
+  background: none; border: none;
+  color: #718096; cursor: pointer;
+  font-size: 1rem; line-height: 1; padding: 0;
+}
+.ip-chip button:hover { color: #e24b4a; }
+
+.log-box {
+  background: #0d0f18; border-radius: 6px;
+  padding: 0.8rem; max-height: 180px;
+  overflow-y: auto;
+  font-family: monospace; font-size: 0.73rem;
+}
+.ll      { color: #4a5568; margin-bottom: 2px; line-height: 1.5; }
+.ll.warn { color: #ef9f27; }
+.ll.err  { color: #e24b4a; }
+.ll.info { color: #4a9eff; }
+
+.manual-block { display: flex; gap: 8px; margin-top: 1rem; }
+.manual-block input {
+  flex: 1; background: #0d0f18;
+  border: 1px solid #2d3748; border-radius: 6px;
+  padding: 6px 12px; color: #e2e8f0; font-size: 0.85rem;
+}
+.btn { padding: 6px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
+.btn-danger  { background: #e24b4a; color: #fff; }
+.btn-success { background: #1d9e75; color: #fff; }
+.btn:hover   { opacity: 0.85; }
+
+canvas { max-height: 200px; }
+#debug-box {
+  background: #1a1d2e; border: 1px solid #2d3748;
+  border-radius: 10px; padding: 1rem;
+  font-size: 0.8rem; color: #718096;
+  margin-bottom: 1rem; font-family: monospace;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Firewall IA — Dashboard</h1>
+  <div style="display:flex;align-items:center;gap:1rem;">
+    <span id="last-update">Cargando...</span>
+    <span id="service-badge">● Cargando</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- Debug box — visible hasta que todo funcione -->
+  <div id="debug-box">
+    Estado: <span id="debug-status">iniciando...</span>
+  </div>
+
+  <!-- Resumen -->
+  <div class="summary-grid">
+    <div class="card">
+      <div class="card-label">Total analizados</div>
+      <div class="card-value" id="s-total">0</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Bloqueados</div>
+      <div class="card-value danger" id="s-blocked">0</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Permitidos</div>
+      <div class="card-value success" id="s-allowed">0</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Tasa de bloqueo</div>
+      <div class="card-value warning" id="s-rate">0%</div>
+    </div>
+    <div class="card">
+      <div class="card-label">IPs en blocklist</div>
+      <div class="card-value danger" id="s-ips">0</div>
+    </div>
+  </div>
+
+  <!-- Graficas -->
+  <div class="panels-grid">
+
+    <div class="panel">
+      <h2>Trafico en el tiempo</h2>
+      <canvas id="chart-timeline"></canvas>
+    </div>
+
+    <div class="panel">
+      <h2>Top IPs atacantes</h2>
+      <canvas id="chart-topips"></canvas>
+    </div>
+
+    <div class="panel">
+      <h2>IPs bloqueadas ahora</h2>
+      <div class="ip-list" id="blocked-list">
+        <span style="color:#718096;font-size:0.82rem">Sin IPs bloqueadas</span>
+      </div>
+      <div class="manual-block">
+        <input type="text" id="manual-ip" placeholder="192.168.10.x">
+        <button class="btn btn-danger" onclick="manualBlock()">Bloquear</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Metricas del modelo</h2>
+      <canvas id="chart-metrics"></canvas>
+    </div>
+
+    <!-- Tabla decisiones -->
+    <div class="panel panel-full">
+      <h2>Ultimas decisiones del motor IA</h2>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Timestamp</th><th>IP</th><th>Label</th>
+              <th>Confianza</th><th>Pkts</th>
+              <th>Puertos</th><th>SYN ratio</th><th>Accion</th>
+            </tr>
+          </thead>
+          <tbody id="decisions-tbody">
+            <tr><td colspan="8" style="text-align:center;color:#718096">
+              Esperando datos...
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Log -->
+    <div class="panel panel-full">
+      <h2>Log del motor IA</h2>
+      <div class="log-box" id="log-box">
+        <div class="ll">Esperando logs...</div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+// ── Estado de las gráficas ─────────────────────
+var chartsReady = false;
+var chartTimeline, chartTopIPs, chartMetrics;
+
+function initCharts() {
+  if (chartsReady) return;
+  try {
+    // Timeline
+    chartTimeline = new Chart(
+      document.getElementById('chart-timeline').getContext('2d'),
+      {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [
+            {
+              label: 'Bloqueados',
+              data: [],
+              borderColor: '#e24b4a',
+              backgroundColor: '#e24b4a22',
+              tension: 0.4, fill: true, pointRadius: 3,
+            },
+            {
+              label: 'Permitidos',
+              data: [],
+              borderColor: '#1d9e75',
+              backgroundColor: '#1d9e7522',
+              tension: 0.4, fill: true, pointRadius: 3,
+            },
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: { legend: { labels: { color: '#a0aec0', font: { size: 10 } } } },
+          scales: {
+            x: { ticks: { color: '#718096', maxTicksLimit: 6, font: { size: 10 } }, grid: { color: '#2d3748' } },
+            y: { ticks: { color: '#718096', font: { size: 10 } }, grid: { color: '#2d3748' }, beginAtZero: true },
+          }
+        }
+      }
+    );
+
+    // Top IPs
+    chartTopIPs = new Chart(
+      document.getElementById('chart-topips').getContext('2d'),
+      {
+        type: 'bar',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'Bloqueos',
+            data: [],
+            backgroundColor: '#7f77dd99',
+            borderColor: '#7f77dd',
+            borderWidth: 1,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          indexAxis: 'y',
+          plugins: { legend: { labels: { color: '#a0aec0', font: { size: 10 } } } },
+          scales: {
+            x: { ticks: { color: '#718096', font: { size: 10 } }, grid: { color: '#2d3748' }, beginAtZero: true },
+            y: { ticks: { color: '#718096', font: { size: 10 } }, grid: { color: '#2d3748' } },
+          }
+        }
+      }
+    );
+
+    // Metricas radar
+    chartMetrics = new Chart(
+      document.getElementById('chart-metrics').getContext('2d'),
+      {
+        type: 'radar',
+        data: {
+          labels: ['Accuracy', 'Precision', 'Recall', 'F1', 'AUC'],
+          datasets: []
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: { legend: { labels: { color: '#a0aec0', font: { size: 10 } } } },
+          scales: {
+            r: {
+              min: 0.3, max: 1.0,
+              ticks: { color: '#718096', backdropColor: 'transparent', stepSize: 0.1, font: { size: 9 } },
+              grid: { color: '#2d3748' },
+              pointLabels: { color: '#a0aec0', font: { size: 10 } },
+            }
+          }
+        }
+      }
+    );
+
+    chartsReady = true;
+    document.getElementById('debug-status').textContent = 'Charts inicializados OK';
+  } catch(e) {
+    document.getElementById('debug-status').textContent = 'ERROR charts: ' + e.message;
+    console.error('Error inicializando charts:', e);
+  }
+}
+
+var COLORS = [
+  { b: '#7f77dd', bg: '#7f77dd33' },
+  { b: '#1d9e75', bg: '#1d9e7533' },
+  { b: '#d85a30', bg: '#d85a3033' },
+  { b: '#ba7517', bg: '#ba751733' },
+];
+
+var metricsLoaded = false;
+
+// ── Actualizar dashboard ──────────────────────
+async function refresh() {
+  var debugEl = document.getElementById('debug-status');
+  try {
+    debugEl.textContent = 'Fetching /api/status...';
+
+    var res = await fetch('/api/status');
+    if (!res.ok) {
+      debugEl.textContent = 'HTTP error: ' + res.status;
+      return;
+    }
+
+    var data = await res.json();
+    debugEl.textContent = 'OK — decisiones: ' + data.decisions.length +
+      ' | blocked: ' + data.summary.blocked +
+      ' | allowed: ' + data.summary.allowed;
+
+    // Inicializar charts la primera vez
+    if (!chartsReady) initCharts();
+
+    // ── Tarjetas ──────────────────────────────
+    document.getElementById('s-total').textContent   = data.summary.total;
+    document.getElementById('s-blocked').textContent = data.summary.blocked;
+    document.getElementById('s-allowed').textContent = data.summary.allowed;
+    document.getElementById('s-rate').textContent    = data.summary.block_rate + '%';
+    document.getElementById('s-ips').textContent     = data.blocked_ips.length;
+
+    // Badge servicio
+    var badge = document.getElementById('service-badge');
+    badge.textContent = '● ' + (data.service.status || 'Desconocido');
+    badge.className   = (data.service && data.service.active) ? '' : 'inactive';
+
+    // Timestamp
+    document.getElementById('last-update').textContent =
+      'Actualizado: ' + new Date().toLocaleTimeString();
+
+    if (!chartsReady) return;
+
+    // ── Timeline ──────────────────────────────
+    if (data.timeline && data.timeline.length > 0) {
+      chartTimeline.data.labels = data.timeline.map(function(t) {
+        return t.time.replace('T', ' ').slice(5, 16);
+      });
+      chartTimeline.data.datasets[0].data = data.timeline.map(function(t) { return t.block; });
+      chartTimeline.data.datasets[1].data = data.timeline.map(function(t) { return t.allow; });
+      chartTimeline.update('none');
+    }
+
+    // ── Top IPs ───────────────────────────────
+    if (data.top_ips && data.top_ips.length > 0) {
+      chartTopIPs.data.labels           = data.top_ips.map(function(t) { return t.ip; });
+      chartTopIPs.data.datasets[0].data = data.top_ips.map(function(t) { return t.count; });
+      chartTopIPs.update('none');
+    }
+
+    // ── Metricas radar (solo cargar una vez) ──
+    if (!metricsLoaded && data.metrics && data.metrics.length > 0) {
+      chartMetrics.data.datasets = data.metrics.map(function(m, i) {
+        var c = COLORS[i % COLORS.length];
+        return {
+          label:                m.model,
+          data:                 [m.accuracy, m.precision, m.recall, m.f1, m.auc],
+          borderColor:          c.b,
+          backgroundColor:      c.bg,
+          pointBackgroundColor: c.b,
+        };
+      });
+      chartMetrics.update();
+      metricsLoaded = true;
+    }
+
+    // ── IPs bloqueadas ────────────────────────
+    var ipList = document.getElementById('blocked-list');
+    if (!data.blocked_ips || data.blocked_ips.length === 0) {
+      ipList.innerHTML = '<span style="color:#718096;font-size:0.82rem">Sin IPs bloqueadas actualmente</span>';
+    } else {
+      ipList.innerHTML = data.blocked_ips.map(function(ip) {
+        return '<div class="ip-chip">' + ip +
+          '<button onclick="unblockIP(\'' + ip + '\')" title="Desbloquear">✕</button>' +
+          '</div>';
+      }).join('');
+    }
+
+    // ── Tabla decisiones ──────────────────────
+    var tbody = document.getElementById('decisions-tbody');
+    if (!data.decisions || data.decisions.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#718096">Sin decisiones aún</td></tr>';
+    } else {
+      var rows = data.decisions.slice().reverse().slice(0, 30);
+      tbody.innerHTML = rows.map(function(d) {
+        var ts   = (d.timestamp || '').replace('T', ' ').slice(0, 19);
+        var conf = ((d.confidence || 0) * 100).toFixed(1) + '%';
+        var lb   = d.label || '';
+        var ac   = d.action || '';
+        return '<tr>' +
+          '<td>' + ts + '</td>' +
+          '<td><code>' + (d.ip || '') + '</code></td>' +
+          '<td><span class="badge badge-' + lb + '">' + lb + '</span></td>' +
+          '<td>' + conf + '</td>' +
+          '<td>' + (d.pkts || 0) + '</td>' +
+          '<td>' + (d.dports || 0) + '</td>' +
+          '<td>' + (d.syn_ratio || 0) + '</td>' +
+          '<td><span class="badge badge-' + ac.toLowerCase() + '">' + ac + '</span></td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    // ── Log ───────────────────────────────────
+    var logBox = document.getElementById('log-box');
+    if (data.log_lines && data.log_lines.length > 0) {
+      logBox.innerHTML = data.log_lines.map(function(line) {
+        var cls = 'll';
+        if (line.indexOf('WARNING') >= 0 || line.indexOf('BLOQUEADO') >= 0) cls += ' warn';
+        else if (line.indexOf('ERROR') >= 0)   cls += ' err';
+        else if (line.indexOf('INFO') >= 0)    cls += ' info';
+        return '<div class="' + cls + '">' +
+          line.replace(/</g, '&lt;').replace(/>/g, '&gt;') +
+          '</div>';
+      }).join('');
+      logBox.scrollTop = logBox.scrollHeight;
+    }
+
+  } catch(e) {
+    debugEl.textContent = 'ERROR JS: ' + e.message;
+    console.error('Error en refresh:', e);
+  }
+}
+
+// ── Acciones manuales ─────────────────────────
+async function unblockIP(ip) {
+  if (!confirm('Desbloquear ' + ip + '?')) return;
+  try {
+    var res  = await fetch('/api/unblock/' + ip, { method: 'POST' });
+    var data = await res.json();
+    alert(data.message);
+    refresh();
+  } catch(e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+async function manualBlock() {
+  var ip = document.getElementById('manual-ip').value.trim();
+  if (!ip) return;
+  try {
+    var res  = await fetch('/api/block/' + ip, { method: 'POST' });
+    var data = await res.json();
+    alert(data.message);
+    document.getElementById('manual-ip').value = '';
+    refresh();
+  } catch(e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+// ── Auto-refresh cada 5 segundos ─────────────
+window.onload = function() {
+  document.getElementById('debug-status').textContent = 'window.onload OK';
+  refresh();
+  setInterval(refresh, 5000);
+};
+</script>
+</body>
+</html>

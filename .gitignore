@@ -1,0 +1,26 @@
+# Entorno virtual — muy pesado
+venv/
+
+# Archivos pcap — muy pesados
+data/pcap/
+
+# Credenciales — NUNCA subir al repo
+alert_config.json
+
+# Modelos serializados — opcionales
+# models/*.joblib
+
+# Logs
+logs/*.log
+logs/*.json
+logs/plots/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Archivos temporales
+*.tmp
+*.pid
